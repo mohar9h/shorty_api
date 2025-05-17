@@ -1,5 +1,5 @@
 package link
 
-type shortenRequest struct {
+type ShortenRequest struct {
 	URL string `json:"url" binding:"required,url"`
 }

@@ -2,10 +2,9 @@ package migrations
 
 import (
 	"fmt"
-	"shorty_api/internal/database"
-	"shorty_api/internal/model"
-
 	"log"
+	"shorty_api/internal/common/model"
+	"shorty_api/internal/database"
 )
 
 func RunMigrations() {

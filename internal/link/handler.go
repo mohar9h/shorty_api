@@ -15,12 +15,15 @@ func NewHandler(usecase Usecase) *Handler {
 }
 
 func (h *Handler) Shorten(c *gin.Context) {
-	var req shortenRequest
+	var req ShortenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		_ = response.ValidationError(c.Writer, c.Request, err)
 		return
 	}
-	code, err := h.usecase.Shorten(c.Request.Context(), req.URL)
+
+	ip := c.ClientIP()
+
+	code, err := h.usecase.Shorten(c.Request.Context(), req.URL, ip)
 	if err != nil {
 		_ = response.Error(c.Writer, http.StatusBadRequest, err.Error(), nil)
 		return
@@ -33,10 +36,9 @@ func (h *Handler) Shorten(c *gin.Context) {
 func (h *Handler) Redirect(c *gin.Context) {
 	code := c.Param("code")
 
-	original, err := h.usecase.Resolve(c.Request.Context(), code)
-
+	original, err := h.usecase.GetOriginalURL(c.Request.Context(), code)
 	if err != nil {
-		_ = response.NotFound(c.Writer, "Link not found")
+		_ = response.NotFound(c.Writer, "Link not found or expired")
 		return
 	}
 	c.Redirect(http.StatusTemporaryRedirect, original)
