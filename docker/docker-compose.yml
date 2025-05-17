@@ -1,122 +1,40 @@
+version: '3.8'
+
 services:
-  ####################### SETUP #######################
-  setup:
+  shorty_api:
     build:
-      context: elk/setup/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    init: true
-    volumes:
-      - ./elk/setup/entrypoint.sh:/entrypoint.sh:ro,Z
-      - ./elk/setup/helpers.sh:/helpers.sh:ro,Z
-      - ./elk/setup/roles:/roles:ro,Z
-      - setup:/state:Z
-    environment:
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
-    networks:
-      - webapi_network
-    depends_on:
-      - elasticsearch
-
-  ####################### ELASTICSEARCH #######################
-  elasticsearch:
-    build:
-      context: elk/elasticsearch/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    container_name: elasticsearch
-    volumes:
-      - elasticsearch:/usr/share/elasticsearch/data:Z
+      context: .
+      dockerfile: Dockerfile
+    container_name: shorty_api
     ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      node.name: elasticsearch
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-}
-      discovery.type: single-node
-    networks:
-      - webapi_network
-    restart: unless-stopped
-
-  ####################### KIBANA #######################
-  kibana:
-    build:
-      context: elk/kibana/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    volumes:
-      - elasticsearch:/usr/share/kibana/data:Z
-    ports:
-      - "5601:5601"
-    environment:
-      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:-}
-    networks:
-      - webapi_network
+      - "8080:8080"
     depends_on:
-      - elasticsearch
-    restart: unless-stopped
-
-  ####################### FILEBEAT #######################
-  filebeat:
-    build:
-      context: elk/filebeat/
-      args:
-        ELASTIC_VERSION: ${ELASTIC_VERSION}
-    user: root
-    command:
-      - -e
-      - --strict.perms=false
-    volumes:
-      - logs:/var/log/filebeat
-      - logs:/app:ro
+      - postgres
     environment:
-      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
-      BEATS_SYSTEM_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=Mohammad1367
+      - DB_NAME=shorty
     networks:
       - webapi_network
-    depends_on:
-      - elasticsearch
 
-  ####################### POSTGRES #######################
   postgres:
-    image: postgres
+    image: postgres:13
     container_name: postgres_container
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Mohammad1367
       POSTGRES_DB: shorty
-      POSTGRES_DATA: /data/postgres
     volumes:
-      - postgres:/data/postgres
+      - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
       - webapi_network
-    restart: unless-stopped
 
-  ####################### REDIS #######################
-  redis:
-    image: redis:latest
-    container_name: redis_container
-    command: [ "redis-server", "/etc/redis/redis.conf" ]
-    volumes:
-      - ./redis/redis.conf:/etc/redis/redis.conf
-      - redis:/etc/redis
-    ports:
-      - "6379:6379"
-    networks:
-      - webapi_network
-
-####################### VOLUMES AND NETWORKS #######################
 volumes:
-  postgres:
-  redis:
-  logs:
-  elasticsearch:
-  setup:
+  pgdata:
 
 networks:
   webapi_network:
