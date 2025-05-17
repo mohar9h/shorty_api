@@ -14,10 +14,6 @@ func NewHandler(usecase Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-type shortenRequest struct {
-	URL string `json:"url" binding:"required,url"`
-}
-
 func (h *Handler) Shorten(c *gin.Context) {
 	var req shortenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -30,7 +26,7 @@ func (h *Handler) Shorten(c *gin.Context) {
 		return
 	}
 
-	shortURL := c.Request.Host + "/api/v1/link/" + code
+	shortURL := c.Request.Host + "/link/" + code
 	_ = response.Success(c.Writer, shortURL, "Short URL created successfully")
 }
 
